@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+const { chromium } = require('playwright');
 
-test('test', async ({ page }) => {
+const getArnDetails = async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
   const element = page.locator('#txtARN');
   const visitUrl = 'https://www.amfiindia.com/investor-corner/online-center/locate-mf-distributor.aspx';
 
@@ -16,9 +18,16 @@ test('test', async ({ page }) => {
   const valueCells = await rows[1].locator('td').all();
 
   for (let i = 0; i < keyCells.length; i++) {
-    const key: any = await keyCells[i].textContent();
+    const key = await keyCells[i].textContent();
     const value = await valueCells[i].textContent();
     dataObject[key] = value;
   }
-  console.log(dataObject);
-})
+  await browser.close()
+  return dataObject
+}
+
+getArnDetails().then((res) => console.log(res))
+
+
+
+module.exports = getArnDetails
