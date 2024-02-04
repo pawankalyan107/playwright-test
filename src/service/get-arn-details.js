@@ -1,8 +1,14 @@
 import { chromium } from "playwright";
 import * as fs from 'fs';
 import * as path from 'path'
+import { defineConfig } from '@playwright/test';
+import { error } from "console";
 
-export const getArnDetails = async (cityName) => {
+export default defineConfig({
+  timeout: 500 * 60 * 1000,
+});
+
+const scrapeWebsite = async (cityName) => {
   try {
     const browser = await chromium.launch();
     const page = await browser.newPage();
@@ -10,9 +16,9 @@ export const getArnDetails = async (cityName) => {
     console.log('cityname:::', name)
 
     const visitUrl = 'https://www.amfiindia.com/investor-corner/online-center/locate-mf-distributor.aspx';
-    await page.goto(visitUrl);
+    await page.goto(visitUrl, { timeout: 60 * 1000 });
     const element = page.locator('#divCity').getByRole('textbox');
- 
+
     await element.fill(name)
     await page.getByRole('banner').click()
     await page.getByRole('button', { name: 'Search' }).click().then(async () => {
@@ -66,3 +72,22 @@ export const getArnDetails = async (cityName) => {
     throw error
   }
 }
+// const cityNames = ['MUMBAI']
+
+export const getArnDetails = async (chunk) => {
+  for (let i = 0; i < chunk.length; i += 3) {
+    const citiesSubset = chunk.slice(i, i + 3);
+    await Promise.all(
+      citiesSubset.map(async (cityName) => {
+        try {
+          await scrapeWebsite(cityName)
+          console.log(`scraping completed for this city name: ${cityName}`)
+        } catch (error) {
+          console.log(`Error while scraping website for ${cityName}: ${error.message}`)
+        }
+      })
+    )
+  }
+  return console.log(`scraping completed for these city names: ${chunk}`)
+}
+
